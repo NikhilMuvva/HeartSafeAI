@@ -1,10 +1,8 @@
-from flask import Flask, request, render_template_string
+import streamlit as st
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
-
-app = Flask(__name__)
 
 # Load dataset and train model
 heart = pd.read_csv("heart.csv")
@@ -16,119 +14,44 @@ X_scaled = scaler.fit_transform(X)
 knn = KNeighborsClassifier()
 knn.fit(X_scaled, Y)
 
-# HTML Template
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heart Safe AI</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #DFFFD6;
-            text-align: center;
-            padding: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        form {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            display: inline-block;
-            text-align: left;
-        }
-        label {
-            display: block;
-            margin: 10px 0;
-        }
-        input {
-            width: 100%;
-            padding: 5px;
-            margin-top: 5px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px;
-            border: none;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .result {
-            font-size: 24px;
-            font-weight: bold;
-            color: red;
-        }
-        .error {
-            color: red;
-        }
-    </style>
-</head>
-<body>
-    <h1>Heart Safe AI - Prediction</h1>
-    {% if error %}
-        <p class="error">{{ error }}</p>
-    {% endif %}
-    <form action="/" method="post">
-        <label>Age (Years): <input type="number" name="age" required></label>
-        <label>Sex (0: Female, 1: Male): <input type="number" name="sex" min="0" max="1" required></label>
-        <label>Chest Pain Type (0-3): <input type="number" name="cp" min="0" max="3" required></label>
-        <label>Resting BP (mm Hg): <input type="number" name="trtbps" required></label>
-        <label>Cholesterol (mg/dL): <input type="number" name="chol" required></label>
-        <label>Fasting Blood Sugar (0-1): <input type="number" name="fbs" min="0" max="1" required></label>
-        <label>Resting ECG (0-2): <input type="number" name="restecg" min="0" max="2" required></label>
-        <label>Max Heart Rate (bpm): <input type="number" name="thalachh" required></label>
-        <label>Exercise Angina (0-1): <input type="number" name="exng" min="0" max="1" required></label>
-        <label>Old Peak: <input type="number" step="0.1" name="oldpeak" required></label>
-        <label>Slope (0-2): <input type="number" name="slp" min="0" max="2" required></label>
-        <label>Number of Vessels (0-4): <input type="number" name="caa" min="0" max="4" required></label>
-        <label>Thal (0-2): <input type="number" name="thall" min="0" max="2" required></label>
-        <button type="submit">Predict</button>
-    </form>
+# Streamlit UI
+st.set_page_config(page_title="Heart Safe AI", page_icon=":)", layout="centered")
+st.title("Heart Safe AI - Heart Attack Prediction")
+st.markdown("### Enter the details below to predict the risk of heart attack.")
 
-    {% if result %}
-        <h2 class="result">{{ result }}</h2>
-        <h3>Precautions:</h3>
-        <ul>
-            {% for precaution in precautions %}
-                <li>{{ precaution }}</li>
-            {% endfor %}
-        </ul>
-        <a href="/">Go Back</a>
-    {% endif %}
-</body>
-</html>
-"""
+# Define Input Fields
+input_data = {}
+labels = {
+    "Age (Years)": "age",
+    "Sex (0: Female, 1: Male)": "sex",
+    "Chest Pain Type (0-3)": "cp",
+    "Resting BP (mm Hg)": "trtbps",
+    "Cholesterol (mg/dL)": "chol",
+    "Fasting Blood Sugar (0-1)": "fbs",
+    "Resting ECG (0-2)": "restecg",
+    "Max Heart Rate (bpm)": "thalachh",
+    "Exercise Angina (0-1)": "exng",
+    "Old Peak (ST Depression)": "oldpeak",
+    "Slope (0-2)": "slp",
+    "Number of Vessels (0-4)": "caa",
+    "Thal (0-2)": "thall",
+}
 
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    if request.method == 'POST':
-        try:
-            data = [float(request.form[key]) for key in features]
-            user_input = np.array([data])
-            user_input_scaled = scaler.transform(user_input)
-            prediction = knn.predict(user_input_scaled)[0]
+for label, key in labels.items():
+    input_data[key] = st.number_input(label, min_value=0.0, step=1.0 if key not in ['oldpeak'] else 0.1)
 
-            if prediction == 1:
-                result = "High Risk of Heart Attack"
-                precautions = ["Maintain a healthy diet", "Regular exercise", "Avoid smoking and alcohol", "Consult a doctor"]
-            else:
-                result = "Low Risk of Heart Attack"
-                precautions = ["Keep maintaining a healthy lifestyle"]
+# Prediction
+if st.button("Predict"):
+    try:
+        user_input = np.array([[input_data[key] for key in features]])
+        user_input_scaled = scaler.transform(user_input)
+        prediction = knn.predict(user_input_scaled)[0]
 
-            return render_template_string(HTML_TEMPLATE, result=result, precautions=precautions)
+        if prediction == 1:
+            st.error("High Risk of Heart Attack! Take precautions:")
+            st.markdown("- Maintain a healthy diet  \n- Regular exercise  \n- Avoid smoking & alcohol  \n- Consult a doctor")
+        else:
+            st.success(" Low Risk of Heart Attack! Keep maintaining a healthy lifestyle.")
 
-        except ValueError:
-            return render_template_string(HTML_TEMPLATE, error="Please enter valid numbers in all fields!")
-
-    return render_template_string(HTML_TEMPLATE)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    except ValueError:
+        st.error(" Please enter valid numbers in all fields!")
