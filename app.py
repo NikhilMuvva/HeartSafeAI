@@ -1,8 +1,10 @@
-import streamlit as st
+from flask import Flask, request, render_template_string
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
+
+app = Flask(__name__)
 
 # Load dataset and train model
 heart = pd.read_csv("heart.csv")
@@ -14,45 +16,119 @@ X_scaled = scaler.fit_transform(X)
 knn = KNeighborsClassifier()
 knn.fit(X_scaled, Y)
 
-# Streamlit UI
-st.set_page_config(page_title="Heart Safe AI", page_icon="❤️", layout="centered")
-st.title("Heart Safe AI - Prediction")
+# HTML Template
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Safe AI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #DFFFD6;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            display: inline-block;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin: 10px 0;
+        }
+        input {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            font-size: 24px;
+            font-weight: bold;
+            color: red;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Heart Safe AI - Prediction</h1>
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+    <form action="/" method="post">
+        <label>Age (Years): <input type="number" name="age" required></label>
+        <label>Sex (0: Female, 1: Male): <input type="number" name="sex" min="0" max="1" required></label>
+        <label>Chest Pain Type (0-3): <input type="number" name="cp" min="0" max="3" required></label>
+        <label>Resting BP (mm Hg): <input type="number" name="trtbps" required></label>
+        <label>Cholesterol (mg/dL): <input type="number" name="chol" required></label>
+        <label>Fasting Blood Sugar (0-1): <input type="number" name="fbs" min="0" max="1" required></label>
+        <label>Resting ECG (0-2): <input type="number" name="restecg" min="0" max="2" required></label>
+        <label>Max Heart Rate (bpm): <input type="number" name="thalachh" required></label>
+        <label>Exercise Angina (0-1): <input type="number" name="exng" min="0" max="1" required></label>
+        <label>Old Peak: <input type="number" step="0.1" name="oldpeak" required></label>
+        <label>Slope (0-2): <input type="number" name="slp" min="0" max="2" required></label>
+        <label>Number of Vessels (0-4): <input type="number" name="caa" min="0" max="4" required></label>
+        <label>Thal (0-2): <input type="number" name="thall" min="0" max="2" required></label>
+        <button type="submit">Predict</button>
+    </form>
 
-# Form for user input
-st.sidebar.header("Enter Patient Details")
+    {% if result %}
+        <h2 class="result">{{ result }}</h2>
+        <h3>Precautions:</h3>
+        <ul>
+            {% for precaution in precautions %}
+                <li>{{ precaution }}</li>
+            {% endfor %}
+        </ul>
+        <a href="/">Go Back</a>
+    {% endif %}
+</body>
+</html>
+"""
 
-def user_input():
-    age = st.sidebar.number_input("Age (Years)", min_value=18, max_value=100, value=40)
-    sex = st.sidebar.radio("Sex", [0, 1], format_func=lambda x: "Female" if x == 0 else "Male")
-    cp = st.sidebar.slider("Chest Pain Type", 0, 3, 1)
-    trtbps = st.sidebar.number_input("Resting BP (mm Hg)", min_value=80, max_value=200, value=120)
-    chol = st.sidebar.number_input("Cholesterol (mg/dL)", min_value=100, max_value=400, value=200)
-    fbs = st.sidebar.radio("Fasting Blood Sugar", [0, 1], format_func=lambda x: "<120 mg/dL" if x == 0 else ">120 mg/dL")
-    restecg = st.sidebar.slider("Resting ECG", 0, 2, 1)
-    thalachh = st.sidebar.number_input("Max Heart Rate (bpm)", min_value=60, max_value=220, value=150)
-    exng = st.sidebar.radio("Exercise Angina", [0, 1], format_func=lambda x: "No" if x == 0 else "Yes")
-    oldpeak = st.sidebar.number_input("Old Peak (ST Depression)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
-    slp = st.sidebar.slider("Slope", 0, 2, 1)
-    caa = st.sidebar.slider("Number of Vessels (0-4)", 0, 4, 0)
-    thall = st.sidebar.slider("Thal (0-2)", 0, 2, 1)
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    if request.method == 'POST':
+        try:
+            data = [float(request.form[key]) for key in features]
+            user_input = np.array([data])
+            user_input_scaled = scaler.transform(user_input)
+            prediction = knn.predict(user_input_scaled)[0]
 
-    return np.array([[age, sex, cp, trtbps, chol, fbs, restecg, thalachh, exng, oldpeak, slp, caa, thall]])
+            if prediction == 1:
+                result = "High Risk of Heart Attack"
+                precautions = ["Maintain a healthy diet", "Regular exercise", "Avoid smoking and alcohol", "Consult a doctor"]
+            else:
+                result = "Low Risk of Heart Attack"
+                precautions = ["Keep maintaining a healthy lifestyle"]
 
-# Predict Button
-if st.sidebar.button("Predict"):
-    user_data = user_input()
-    user_data_scaled = scaler.transform(user_data)
-    prediction = knn.predict(user_data_scaled)[0]
+            return render_template_string(HTML_TEMPLATE, result=result, precautions=precautions)
 
-    if prediction == 1:
-        st.error("High Risk of Heart Attack")
-        st.write("### Precautions:")
-        st.write("- Maintain a healthy diet")
-        st.write("- Regular exercise")
-        st.write("- Avoid smoking and alcohol")
-        st.write("- Consult a doctor")
-    else:
-        st.success("Low Risk of Heart Attack")
-        st.write("Keep maintaining a healthy lifestyle")
+        except ValueError:
+            return render_template_string(HTML_TEMPLATE, error="Please enter valid numbers in all fields!")
 
-st.sidebar.markdown("Developed by Heart Safe AI")
+    return render_template_string(HTML_TEMPLATE)
+
+if __name__ == '__main__':
+    app.run(debug=True)
