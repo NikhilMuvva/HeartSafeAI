@@ -22,6 +22,7 @@ st.markdown("""
     <style>
     .stApp {
         background-color: #DFFFD6;
+        foreground-color: #ffffff;
     }
     </style>
     """, unsafe_allow_html=True)
