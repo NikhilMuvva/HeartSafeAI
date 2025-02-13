@@ -14,8 +14,29 @@ X_scaled = scaler.fit_transform(X)
 knn = KNeighborsClassifier()
 knn.fit(X_scaled, Y)
 
+# Custom CSS for background color (Light Green)
+st.markdown("""
+    <style>
+    body {
+        background-color: #DFFFD6 !important;
+    }
+    .stApp {
+        background-color: #DFFFD6;
+    }
+    .stTextInput, .stNumberInput, .stButton {
+        border-radius: 10px;
+        padding: 5px;
+    }
+    .stButton>button {
+        background-color: #4CAF50 !important;
+        color: white !important;
+        font-size: 16px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # Streamlit UI
-st.set_page_config(page_title="Heart Safe AI", page_icon=":)", layout="centered")
+st.set_page_config(page_title="Heart Safe AI", layout="centered")
 st.title("Heart Safe AI - Heart Attack Prediction")
 st.markdown("### Enter the details below to predict the risk of heart attack.")
 
@@ -51,7 +72,7 @@ if st.button("Predict"):
             st.error("High Risk of Heart Attack! Take precautions:")
             st.markdown("- Maintain a healthy diet  \n- Regular exercise  \n- Avoid smoking & alcohol  \n- Consult a doctor")
         else:
-            st.success(" Low Risk of Heart Attack! Keep maintaining a healthy lifestyle.")
+            st.success("Low Risk of Heart Attack! Keep maintaining a healthy lifestyle.")
 
     except ValueError:
-        st.error(" Please enter valid numbers in all fields!")
+        st.error("Please enter valid numbers in all fields!")
