@@ -4,6 +4,9 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
 
+# ✅ Set Page Configuration (Must be the first Streamlit command)
+st.set_page_config(page_title="Heart Safe AI", layout="centered")
+
 # Load dataset and train model
 heart = pd.read_csv("heart.csv")
 features = ['age', 'sex', 'cp', 'trtbps', 'chol', 'fbs', 'restecg', 'thalachh', 'exng', 'oldpeak', 'slp', 'caa', 'thall']
@@ -14,29 +17,16 @@ X_scaled = scaler.fit_transform(X)
 knn = KNeighborsClassifier()
 knn.fit(X_scaled, Y)
 
-# Custom CSS for background color (Light Green)
+# Custom CSS for Light Green Background
 st.markdown("""
     <style>
-    body {
-        background-color: #DFFFD6 !important;
-    }
     .stApp {
         background-color: #DFFFD6;
-    }
-    .stTextInput, .stNumberInput, .stButton {
-        border-radius: 10px;
-        padding: 5px;
-    }
-    .stButton>button {
-        background-color: #4CAF50 !important;
-        color: white !important;
-        font-size: 16px;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # Streamlit UI
-st.set_page_config(page_title="Heart Safe AI", layout="centered")
 st.title("Heart Safe AI - Heart Attack Prediction")
 st.markdown("### Enter the details below to predict the risk of heart attack.")
 
