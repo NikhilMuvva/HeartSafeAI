@@ -17,21 +17,46 @@ X_scaled = scaler.fit_transform(X)
 knn = KNeighborsClassifier()
 knn.fit(X_scaled, Y)
 
-# Custom CSS for Light Green Background
+# ✅ Custom CSS for Light Green Background & Black Text
 st.markdown("""
     <style>
     .stApp {
         background-color: #DFFFD6;
         color: black;
     }
+    h1, h2, h3, h4, h5, h6, p, label, span, div {
+        color: black !important;
+    }
+    .stButton>button {
+        background-color: #4CAF50 !important;
+        color: white !important;
+        font-size: 16px !important;
+        border-radius: 10px;
+        padding: 10px;
+    }
+    .input-box {
+        border: 2px solid #4CAF50;
+        border-radius: 8px;
+        padding: 8px;
+        font-size: 14px;
+        background: white;
+    }
+    .image-container {
+        text-align: center;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# Streamlit UI
+# 🎯 **Title**
 st.title("Heart Safe AI - Heart Attack Prediction")
 st.markdown("### Enter the details below to predict the risk of heart attack.")
 
-# Define Input Fields
+# 🎯 **Centered Image (Splash Image)**
+st.markdown('<div class="image-container">', unsafe_allow_html=True)
+st.image("splash_image.png", width=150)  # Adjust size as needed
+st.markdown('</div>', unsafe_allow_html=True)
+
+# 🎯 **Form for Input Fields**
 input_data = {}
 labels = {
     "Age (Years)": "age",
@@ -52,7 +77,7 @@ labels = {
 for label, key in labels.items():
     input_data[key] = st.number_input(label, min_value=0.0, step=1.0 if key not in ['oldpeak'] else 0.1)
 
-# Prediction
+# 🎯 **Prediction Button**
 if st.button("Predict"):
     try:
         user_input = np.array([[input_data[key] for key in features]])
