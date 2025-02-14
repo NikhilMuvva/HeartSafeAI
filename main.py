@@ -44,15 +44,21 @@ if st.sidebar.button("Predict"):
     user_data_scaled = scaler.transform(user_data)
     prediction = knn.predict(user_data_scaled)[0]
 
-    if prediction == 1:
-        st.error("High Risk of Heart Attack")
-        st.write("### Precautions:")
-        st.write("- Maintain a healthy diet")
-        st.write("- Regular exercise")
-        st.write("- Avoid smoking and alcohol")
-        st.write("- Consult a doctor")
-    else:
-        st.success("Low Risk of Heart Attack")
-        st.write("Keep maintaining a healthy lifestyle")
+    risk_levels = {
+        0: ("Low Risk", "✅ Keep maintaining a healthy lifestyle."),
+        1: ("Moderate Risk", "⚠️ Consider making small lifestyle changes."),
+        2: ("High Risk", "❗ Immediate lifestyle changes recommended."),
+        3: ("Critical Risk", "🚨 Seek medical attention immediately!"),
+    }
 
-st.sidebar.markdown("Developed by Heart Safe AI")
+    risk_label, advice = risk_levels.get(prediction, ("Unknown", "No data available."))
+
+    if prediction >= 2:
+        st.error(risk_label)
+    elif prediction == 1:
+        st.warning(risk_label)
+    else:
+        st.success(risk_label)
+
+    st.write(advice)
+
