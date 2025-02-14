@@ -85,7 +85,7 @@ if st.button("Predict"):
         prediction = knn.predict(user_input_scaled)[0]
 
         if prediction == 1:
-            st.error("High Risk of Heart Attack! Take precautions: AHHH")
+            st.error("High Risk of Heart Attack! Take precautions: ")
             st.markdown("- Maintain a healthy diet  \n- Regular exercise  \n- Avoid smoking & alcohol  \n- Consult a doctor")
         else:
             st.success("Low Risk of Heart Attack! Keep maintaining a healthy lifestyle.")
